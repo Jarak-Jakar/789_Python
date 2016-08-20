@@ -44,8 +44,8 @@ numberOfPoints = args.numOfPoints
 
 ## Calculate distortion free parameters of left and right camera
 ## Returns  [focalLength, translationVector, R, estimatedK1, errorMagnitude,imCoord,sx,XYZ]
-resultsL = singleCameraCalibrate.singleCameraCalibrate(filepathL, initialParameters,numberOfPoints)
-resultsR = singleCameraCalibrate.singleCameraCalibrate(filepathR, initialParameters,numberOfPoints)
+resultsL = singleCameraCalibrate.singleCameraCalibrate(filepathL, initialParameters,numberOfPoints, "resultsL.csv")
+resultsR = singleCameraCalibrate.singleCameraCalibrate(filepathR, initialParameters,numberOfPoints, "resultsR.csv")
 
 ## Find the baseline of unoptimised no distortion
 #findBaseline(leftF,leftRot,leftTranslation,rightF,rightRot,rightTranslation,imageCenter):
@@ -64,10 +64,10 @@ outL = opt.optimiseCalibration(resultsL[0],resultsL[1],resultsL[2],resultsL[3],r
 outR = opt.optimiseCalibration(resultsR[0],resultsR[1],resultsR[2],resultsR[3],resultsR[5],resultsR[6],resultsR[7],initialParameters[1],initialParameters[0])
 
 #Extract values
-optLeftFocal = outL["focalLength"].value
-optLeftK1 = outL["k1"].value
-optLeftTrans =np.array([[outL["tx"].value],[outL["ty"].value],[outL["tz"].value]]) #np.array([outL["tx"].value,outL["ty"].value,outL["tz"].value])#np.array([[outL["tx"].value],[outL["ty"].value],[outL["tz"].value]])
-optLeftSx = [outL["sx"].value]
+optLeftFocal = outL[0]["focalLength"].value
+optLeftK1 = outL[0]["k1"].value
+optLeftTrans =np.array([[outL[0]["tx"].value],[outL[0]["ty"].value],[outL[0]["tz"].value]]) #np.array([outL["tx"].value,outL["ty"].value,outL["tz"].value])#np.array([[outL["tx"].value],[outL["ty"].value],[outL["tz"].value]])
+optLeftSx = [outL[0]["sx"].value]
 optLeftR = resultsL[2]
 
 print("\n Camera 1 post optimisation")
@@ -89,10 +89,10 @@ print("\n R")
 print(optLeftR)
 
 
-optRightFocal = outR["focalLength"].value
-optRightK1 = outR["k1"].value
-optRightTrans =np.array([[outR["tx"].value],[outR["ty"].value],[outR["tz"].value]])#np.array([outR["tx"].value,outR["ty"].value,outR["tz"].value]) #np.array([[outR["tx"].value],[outR["ty"].value],[outR["tz"].value]])
-optRightSx = [outR["sx"].value]
+optRightFocal = outR[0]["focalLength"].value
+optRightK1 = outR[0]["k1"].value
+optRightTrans =np.array([[outR[0]["tx"].value],[outR[0]["ty"].value],[outR[0]["tz"].value]])#np.array([outR["tx"].value,outR["ty"].value,outR["tz"].value]) #np.array([[outR["tx"].value],[outR["ty"].value],[outR["tz"].value]])
+optRightSx = [outR[0]["sx"].value]
 optRightR = resultsR[2]
 
 print("\n Camera 2 post optimisation")
@@ -183,11 +183,14 @@ outR1, outR2, outP1, outP2, outQ, junk1, junk2 = cv2.stereoRectify(cameraMatrix1
 print("distcoeffs = ")
 print(distcoeffs)
 
-map1, map2 = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR1,
+map1L, map2L = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR1,
                                          newCameraMatrix=outP1, size=(640, 480), m1type=cv2.CV_16SC2)
 
-leftRectImage = cv2.remap(src=leftUnrectImage, map1=map1, map2=map2, interpolation=cv2.INTER_LINEAR)
-rightRectImage = cv2.remap(src=rightUnrectImage, map1=map1, map2=map2, interpolation=cv2.INTER_LINEAR)
+map1R, map2R = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR2,
+                                         newCameraMatrix=outP2, size=(640, 480), m1type=cv2.CV_16SC2)
+
+leftRectImage = cv2.remap(src=leftUnrectImage, map1=map1R, map2=map2R, interpolation=cv2.INTER_LINEAR)
+rightRectImage = cv2.remap(src=rightUnrectImage, map1=map1L, map2=map2L, interpolation=cv2.INTER_LINEAR)
 
 # cv2.imwrite("leftRectifiedImageHyun.jpg", rectifiedImages[0])
 # cv2.imwrite("rightRectifiedImageHyun.jpg", rectifiedImages[1])
@@ -198,13 +201,15 @@ cv2.imwrite("rightRectifiedImageOCV.jpg", rightRectImage)
 leftRectImageGray = cv2.cvtColor(leftRectImage, cv2.COLOR_BGR2GRAY)
 rightRectImageGray = cv2.cvtColor(rightRectImage, cv2.COLOR_BGR2GRAY)
 
-stereomatcher = cv2.StereoBM_create(numDisparities=16, blockSize=15)
-disparityimage = stereomatcher.compute(rightRectImageGray, leftRectImageGray)
+stereomatcher = cv2.StereoBM_create(numDisparities=32, blockSize=21)
+disparityimage = stereomatcher.compute(leftRectImageGray, rightRectImageGray)
+
+#disparityimage += 16.0
 
 #cv2.imshow("dispa", disparityimage)
 #cv2.waitKey(0)
 
-cv2.imwrite("disparitymap.jpg", disparityimage)
+cv2.imwrite("disparitymap.png", disparityimage)
 
 # pMatLeftOld = rec.createProjectionMatrix(kLeft,optLeftR,optLeftTrans)
 # pMatRightOld = rec.createProjectionMatrix(kRight,optRightR,optRightTrans)

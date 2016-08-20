@@ -185,7 +185,7 @@ def singleCameraCalibrate(filePath, initialParameters, numberOfPoints, outputFil
 		
 		writer.writerow(['Xw', 'Yw', 'Zw', 'img x', 'img y', 'Xwerr', 'Ywerr', 'Zwerr'])
 		for i in range(numberOfPoints):
-			writer.writerow([XYZ[i][0], XYZ[i][1], XYZ[i][2], imCoord[i][0], imCoord[i][1], backProjectionErrors[0][i], backProjectionErrors[1][i], backProjectionErrors[2][i]])
+			writer.writerow([XYZ[i][0], XYZ[i][1], XYZ[i][2], imCoord[i][0], imCoord[i][1], backProjectionErrors[i][0], backProjectionErrors[i][1], backProjectionErrors[i][2]])
 	
 	return [focalLength, translationVector, R, estimatedK1, errorMagnitude,imCoord,sx,XYZ]
 	## Get the first distortion coeff
