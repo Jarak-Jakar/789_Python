@@ -10,10 +10,10 @@ import timeit
 
 def rectifyImagesHyun(leftImage, leftFocalLength, leftCameraMatrix, leftRotationMatrix, leftTranslationVector, rightImage,
                       rightFocalLength,
-                      rightCameraMatrix, rightRotationMatrix, rightTranlsationMatrix, imageCentre):
+                      rightCameraMatrix, rightRotationMatrix, rightTranlsationMatrix, imageCentre, pixelSize):
     opticalCenters = auxF.findOpticalCenter(leftFocalLength, leftRotationMatrix, leftTranslationVector,
                                             rightFocalLength, rightRotationMatrix,
-                                            rightTranlsationMatrix, imageCentre)
+                                            rightTranlsationMatrix, imageCentre, pixelSize)
 
     rectifiedR = rec.rectifyParameterizeR(leftRotationMatrix, opticalCenters[0], opticalCenters[1])
     print("\n Rectified Rotation")

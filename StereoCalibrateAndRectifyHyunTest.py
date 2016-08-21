@@ -49,7 +49,7 @@ resultsR = singleCameraCalibrate.singleCameraCalibrate(filepathR, initialParamet
 
 ## Find the baseline of unoptimised no distortion
 #findBaseline(leftF,leftRot,leftTranslation,rightF,rightRot,rightTranslation,imageCenter):
-baselineNoOpt = auxF.findBaseline(resultsL[0],resultsL[2],resultsL[1],resultsR[0],resultsR[2],resultsR[1],initialParameters[1])
+baselineNoOpt = auxF.findBaseline(resultsL[0],resultsL[2],resultsL[1],resultsR[0],resultsR[2],resultsR[1],initialParameters[1], pixelHeight)
 
 #naiveTriangulate(imCoordL,imCoordR, focalLength,pixelsize,imageCenter,baseline,R,T,sx):
 projectedWC = auxF.naiveTriangulate(resultsL[5],resultsR[5], resultsL[0],initialParameters[0][0],initialParameters[1],baselineNoOpt,resultsL[2],resultsL[1],[resultsL[6],resultsR[6]])
@@ -115,9 +115,9 @@ print(optRightR)
 
 #Find the optimised baseline
 #Find baseline of optimised cameras
-optBaseline = auxF.findBaseline(optLeftFocal,optLeftR,optLeftTrans,optRightFocal,optRightR,optRightTrans,initialParameters[1])
+optBaseline = auxF.findBaseline(optLeftFocal,optLeftR,optLeftTrans,optRightFocal,optRightR,optRightTrans,initialParameters[1], pixelHeight)
 #opticalCenters = auxF.findOpticalCenter(optLeftFocal,optLeftR,optLeftTrans,optRightFocal,optRightR,optRightTrans,initialParameters[1])
-opticalCenters = auxF.findOpticalCenter((optLeftFocal/pixelHeight),optLeftR,optLeftTrans,(optRightFocal/pixelWidth),optRightR,optRightTrans,initialParameters[1])
+opticalCenters = auxF.findOpticalCenter(optLeftFocal,optLeftR,optLeftTrans,optRightFocal,optRightR,optRightTrans,initialParameters[1], pixelHeight)
 
 print("\nBaseline")
 print("\n No opt | opt")
@@ -170,7 +170,7 @@ trevorsR = np.array([[9.9790417658222752e-001, -2.3270560176052738e-002,
 trevorsT = np.array([[-9.9678007841280525e-001], [-4.1303518227517835e-002], [6.8727684824901214e-002]])
 
 rectifiedImages = rectify.rectifyImagesHyun(leftUnrectImage, optLeftFocal, kLeft, optLeftR, optLeftTrans, rightUnrectImage,
-                                             optRightFocal, kRight, optRightR, optRightTrans, initialParameters[1])
+                                             optRightFocal, kRight, optRightR, optRightTrans, initialParameters[1], pixelHeight)
 
 # Take the OpenCV approach
 
