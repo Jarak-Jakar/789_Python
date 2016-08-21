@@ -56,10 +56,10 @@ def rectifyimagehyun(image, coefficientMatrix):
     oldCoords = np.zeros((2,1)) - (c2 - (image.shape[1] * c1))
     blInter = createbilinInterpolator(image)
 
-    testCoords = np.array([320.4, 239.8])
-    t = timeit.Timer(stmt=lambda: blInter(testCoords))
-
-    print(t.repeat(5, 10))
+    # testCoords = np.array([320.4, 239.8])
+    # t = timeit.Timer(stmt=lambda: blInter(testCoords))
+    #
+    # print(t.repeat(5, 10))
 
     # Do the calculation of the new coordinates
     for y in range(image.shape[1]):
@@ -73,16 +73,16 @@ def rectifyimagehyun(image, coefficientMatrix):
             rectImage[x][y] = blInter(newCoords)
             np.copyto(oldCoords, newCoords)
 
-    return rectImage
+    return rectImage.astype(np.uint8)
 
 
 # Code for this blatantly copied from Gee's CS 773 Rectification slides
 def createbilinInterpolator(image):
     colourExtractor = createColourExtractor(image)
-    testCoords = np.array([320.4, 239.8])
-    t = timeit.Timer(stmt=lambda: colourExtractor(testCoords[0], testCoords[1]))
-
-    print(t.repeat(5, 100))
+    # testCoords = np.array([320.4, 239.8])
+    # t = timeit.Timer(stmt=lambda: colourExtractor(testCoords[0], testCoords[1]))
+    #
+    # print(t.repeat(5, 100))
 
     def bilinInterp(coords):
         x1 = math.floor(coords[0])
