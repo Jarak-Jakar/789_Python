@@ -16,6 +16,13 @@ def rectifyImagesHyun(leftImage, leftFocalLength, leftCameraMatrix, leftRotation
                                             rightTranlsationMatrix, imageCentre, pixelSize)
 
     rectifiedR = rec.rectifyParameterizeR(leftRotationMatrix, opticalCenters[0], opticalCenters[1])
+
+    # rectifiedR = np.array([[9.9790417658222752e-001, -2.3270560176052738e-002,
+    # -6.0379925379543391e-002], [3.0579117318157156e-002,
+    # 9.9192377895663997e-001, 1.2309400604587155e-001],
+    # [5.7027817280594743e-002, -1.2468238756725582e-001,
+    # 9.9055647506174005e-001]])
+
     print("\n Rectified Rotation")
     print(rectifiedR)
 

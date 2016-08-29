@@ -245,7 +245,7 @@ def calculateBackProjection(R, transV, focalLength, imCoord, numPoints, xyz, pix
     errorsYw = resultsnp[:, 1] - xyz[:, 1]
     errorsZw = resultsnp[:, 2] - xyz[:, 2]
     meanErrorMag = np.mean(np.sqrt(errorsXw ** 2 + errorsYw ** 2 + errorsZw ** 2))
-    print("\mean error mag")
+    print("\nmean error mag")
     print(meanErrorMag)
     return  resultsnp
 
