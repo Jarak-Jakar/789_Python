@@ -3,16 +3,90 @@ import numpy as np
 from multiprocessing import Process
 from multiprocessing import Pipe
 from multiprocessing import Event
+from picamera import PiCamera
+from picamera.array import PiRGBArray
+import RPi.GPIO as gp
 
-def dummy(blah, event=None):
-    print("Hello World!")
+# gp.setwarnings(False)
+# gp.setmode(gp.BOARD)
+#
+# gp.setup(7, gp.OUT)
+# gp.setup(11, gp.OUT)
+# gp.setup(12, gp.OUT)
+#
+# gp.output(7, False)
+# gp.output(11, False)
+# gp.output(12, True)
+# camNum = 3
+
+# def toggle_cam():
+#     global camNum
+#     gp.setmode(gp.BOARD)
+#     if camNum == 1:
+#         camNum = 3
+#         gp.output(7, False)
+#         gp.output(11, True)
+#         gp.output(12, False)
+#
+#     elif camNum == 3:
+#         camNum = 1
+#         gp.output(7, False)
+#         gp.output(11, False)
+#         gp.output(12, True)
 
 def captureImages(sendPipe, event=None):
     # The code for capturing images
-    print("I can has cheezburger")
 
-def rectifyImages(receivePipe, sendPipe, event=None):
+    def toggle_cam():
+        global camNum
+        gp.setmode(gp.BOARD)
+        if camNum == 1:
+            camNum = 3
+            gp.output(7, False)
+            gp.output(11, True)
+            gp.output(12, False)
+
+        elif camNum == 3:
+            camNum = 1
+            gp.output(7, False)
+            gp.output(11, False)
+            gp.output(12, True)
+
+    gp.setwarnings(False)
+    gp.setmode(gp.BOARD)
+
+    gp.setup(7, gp.OUT)
+    gp.setup(11, gp.OUT)
+    gp.setup(12, gp.OUT)
+
+    gp.output(7, False)
+    gp.output(11, False)
+    gp.output(12, True)
+    camNum = 3
+
+    camera = PiCamera()
+    camera.resolution = (640, 480)
+    camera.framerate = 32
+    rawCapture = PiRGBArray(camera)
+
+def rectifyImages(receivePipe, sendPipe, calibParams, event=None):
     # The code for rectifying captured images
+
+    # Load in the calibration results, and compute the rectification maps
+
+    distcoeffs = np.zeros(5) # Just ignore distortion
+
+    outR1, outR2, outP1, outP2, outQ, junk1, junk2 = cv2.stereoRectify(cameraMatrix1=kLeft, distCoeffs1=distcoeffs,
+                                                                       cameraMatrix2=kRight,
+                                                                       distCoeffs2=distcoeffs, imageSize=(640, 480),
+                                                                       R=rectifiedR,
+                                                                       T=(opticalCenters[0] - opticalCenters[1]))
+
+    map1L, map2L = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR1,
+                                               newCameraMatrix=outP1, size=(640, 480), m1type=cv2.CV_16SC2)
+
+    map1R, map2R = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR2,
+                                               newCameraMatrix=outP2, size=(640, 480), m1type=cv2.CV_16SC2)
 
     leftImage = np.zeros((640, 480), dtype=np.uint8)
     rightImage = np.zeros((640, 480), dtype=np.uint8)
@@ -22,12 +96,14 @@ def rectifyImages(receivePipe, sendPipe, event=None):
     while not event.is_set():
         if workWithLeftImage:
             leftImage = receivePipe.recv()
-            #rectify!
+            # rectify!
+            leftImage = cv2.remap(src=leftImage, map1=map1L, map2=map2L, interpolation=cv2.INTER_LINEAR)
             sendPipe.send(leftImage)
             workWithLeftImage = False
         else:
             rightImage = receivePipe.recv()
-            #rectify!
+            # rectify!
+            rightImage = cv2.remap(src=rightImage, map1=map1R, map2=map2R, interpolation=cv2.INTER_LINEAR)
             sendPipe.send(rightImage)
             workWithLeftImage = True
 
@@ -63,7 +139,7 @@ def makeDecision(receivePipe, event=None):
 
 # Load/specify calibration parameters
 
-
+calibrationParameters = 0
 
 # Create processes, one for each task
 # Create also pipes for communication between processes
@@ -78,8 +154,8 @@ rectifyReceiverPipe, captureSenderPipe = Pipe(False)
 stereoMatchReceiverPipe, rectifySenderPipe = Pipe(False)
 decideReceiverPipe, stereoMatchSenderPipe = Pipe(False)
 
-captureProcess = Process(target=captureImages(), args=captureSenderPipe, kwargs={'event': event})
-rectifyProcess = Process(target=rectifyImages(), args=(rectifyReceiverPipe, rectifySenderPipe), kwargs={'event': event})
+captureProcess = Process(target=captureImages, args=captureSenderPipe, kwargs={'event': event})
+rectifyProcess = Process(target=rectifyImages, args=(rectifyReceiverPipe, rectifySenderPipe, calibrationParameters), kwargs={'event': event})
 stereoMatchProcess = Process(target=stereoMatchImages, args=(stereoMatchReceiverPipe, stereoMatchSenderPipe), kwargs={'event': event})
 decideProcess = Process(target=makeDecision, args=decideReceiverPipe, kwargs={'event': event})
 
