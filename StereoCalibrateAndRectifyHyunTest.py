@@ -169,45 +169,50 @@ trevorsR = np.array([[9.9790417658222752e-001, -2.3270560176052738e-002,
 
 trevorsT = np.array([[-9.9678007841280525e-001], [-4.1303518227517835e-002], [6.8727684824901214e-002]])
 
-# rectifiedImages = rectify.rectifyImagesHyun(leftUnrectImage, optLeftFocal, kLeft, optLeftR, optLeftTrans, rightUnrectImage,
-#                                              optRightFocal, kRight, optRightR, optRightTrans, initialParameters[1], pixelHeight)
+rectifiedImages = rectify.rectifyImagesHyun(leftUnrectImage, optLeftFocal, kLeft, optLeftR, optLeftTrans, rightUnrectImage,
+                                             optRightFocal, kRight, optRightR, optRightTrans, initialParameters[1], pixelHeight)
 
 # Take the OpenCV approach
 
-distcoeffs = np.zeros(5)
+# distcoeffs = np.zeros(5)
+#
+# outR1, outR2, outP1, outP2, outQ, junk1, junk2 = cv2.stereoRectify(cameraMatrix1=kLeft, distCoeffs1=distcoeffs, cameraMatrix2=kRight,
+#                                                      distCoeffs2=distcoeffs, imageSize=(640, 480), #np.array((leftUnrectImage.shape[0],leftUnrectImage.shape[1])),
+#                                                      R=rectifiedR, T=(opticalCenters[0] - opticalCenters[1]))
+#
+# print("distcoeffs = ")
+# print(distcoeffs)
+#
+# map1L, map2L = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR1,
+#                                          newCameraMatrix=outP1, size=(640, 480), m1type=cv2.CV_16SC2)
+#
+# map1R, map2R = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR2,
+#                                          newCameraMatrix=outP2, size=(640, 480), m1type=cv2.CV_16SC2)
+#
+# leftRectImage = cv2.remap(src=leftUnrectImage, map1=map1L, map2=map2L, interpolation=cv2.INTER_LINEAR)
+# rightRectImage = cv2.remap(src=rightUnrectImage, map1=map1R, map2=map2R, interpolation=cv2.INTER_LINEAR)
 
-outR1, outR2, outP1, outP2, outQ, junk1, junk2 = cv2.stereoRectify(cameraMatrix1=kLeft, distCoeffs1=distcoeffs, cameraMatrix2=kRight,
-                                                     distCoeffs2=distcoeffs, imageSize=(640, 480), #np.array((leftUnrectImage.shape[0],leftUnrectImage.shape[1])),
-                                                     R=rectifiedR, T=(opticalCenters[0] - opticalCenters[1]))
+cv2.imwrite("leftRectifiedImageHyun.jpg", rectifiedImages[0])
+cv2.imwrite("rightRectifiedImageHyun.jpg", rectifiedImages[1])
 
-print("distcoeffs = ")
-print(distcoeffs)
+# cv2.imwrite("leftRectifiedImageOCV.jpg", leftRectImage)
+# cv2.imwrite("rightRectifiedImageOCV.jpg", rightRectImage)
 
-map1L, map2L = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR1,
-                                         newCameraMatrix=outP1, size=(640, 480), m1type=cv2.CV_16SC2)
+leftRectImageGray = cv2.cvtColor(rectifiedImages[0], cv2.COLOR_BGR2GRAY)
+rightRectImageGray = cv2.cvtColor(rectifiedImages[1], cv2.COLOR_BGR2GRAY)
 
-map1R, map2R = cv2.initUndistortRectifyMap(cameraMatrix=kAverage, distCoeffs=distcoeffs, R=outR2,
-                                         newCameraMatrix=outP2, size=(640, 480), m1type=cv2.CV_16SC2)
-
-leftRectImage = cv2.remap(src=leftUnrectImage, map1=map1L, map2=map2L, interpolation=cv2.INTER_LINEAR)
-rightRectImage = cv2.remap(src=rightUnrectImage, map1=map1R, map2=map2R, interpolation=cv2.INTER_LINEAR)
-
-# cv2.imwrite("leftRectifiedImageHyun.jpg", rectifiedImages[0])
-# cv2.imwrite("rightRectifiedImageHyun.jpg", rectifiedImages[1])
-
-cv2.imwrite("leftRectifiedImageOCV.jpg", leftRectImage)
-cv2.imwrite("rightRectifiedImageOCV.jpg", rightRectImage)
-
-# leftRectImageGray = cv2.cvtColor(rectifiedImages[0], cv2.COLOR_BGR2GRAY)
-# rightRectImageGray = cv2.cvtColor(rectifiedImages[1], cv2.COLOR_BGR2GRAY)
-
-leftRectImageGray = cv2.cvtColor(leftRectImage, cv2.COLOR_BGR2GRAY)
-rightRectImageGray = cv2.cvtColor(rightRectImage, cv2.COLOR_BGR2GRAY)
-
-stereomatcher = cv2.StereoBM_create(numDisparities=32, blockSize=29)
+stereomatcher = cv2.StereoBM_create(numDisparities=32, blockSize=15)
 disparityimage = stereomatcher.compute(leftRectImageGray, rightRectImageGray)
 
 #disparityimage += 16.0
+
+# leftRectImageGray = cv2.cvtColor(leftRectImage, cv2.COLOR_BGR2GRAY)
+# rightRectImageGray = cv2.cvtColor(rightRectImage, cv2.COLOR_BGR2GRAY)
+#
+# stereomatcher = cv2.StereoBM_create(numDisparities=32, blockSize=29)
+# disparityimage = stereomatcher.compute(leftRectImageGray, rightRectImageGray)
+#
+# disparityimage += 16.0
 
 #cv2.imshow("dispa", disparityimage)
 #cv2.waitKey(0)

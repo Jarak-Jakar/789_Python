@@ -6,6 +6,7 @@ import singleCameraCalibrate
 import OptimisationFunctions as opt
 import math
 import timeit
+import scipy.ndimage
 
 
 def rectifyImagesHyun(leftImage, leftFocalLength, leftCameraMatrix, leftRotationMatrix, leftTranslationVector, rightImage,
@@ -15,13 +16,13 @@ def rectifyImagesHyun(leftImage, leftFocalLength, leftCameraMatrix, leftRotation
                                             rightFocalLength, rightRotationMatrix,
                                             rightTranlsationMatrix, imageCentre, pixelSize)
 
-    rectifiedR = rec.rectifyParameterizeR(leftRotationMatrix, opticalCenters[0], opticalCenters[1])
+    #rectifiedR = rec.rectifyParameterizeR(leftRotationMatrix, opticalCenters[0], opticalCenters[1])
 
-    # rectifiedR = np.array([[9.9790417658222752e-001, -2.3270560176052738e-002,
-    # -6.0379925379543391e-002], [3.0579117318157156e-002,
-    # 9.9192377895663997e-001, 1.2309400604587155e-001],
-    # [5.7027817280594743e-002, -1.2468238756725582e-001,
-    # 9.9055647506174005e-001]])
+    rectifiedR = np.array([[9.9790417658222752e-001, -2.3270560176052738e-002,
+    -6.0379925379543391e-002], [3.0579117318157156e-002,
+    9.9192377895663997e-001, 1.2309400604587155e-001],
+    [5.7027817280594743e-002, -1.2468238756725582e-001,
+    9.9055647506174005e-001]])
 
     print("\n Rectified Rotation")
     print(rectifiedR)
@@ -61,25 +62,50 @@ def rectifyimagehyun(image, coefficientMatrix):
     c2 = coefficientMatrix[0:2, 1:2]
     rectImage = np.zeros(image.shape)
     oldCoords = np.zeros((2,1)) - (c2 - (image.shape[1] * c1))
-    blInter = createbilinInterpolator(image)
+    zeros = np.zeros((2,1))
+    print("Image.shape = ")
+    print(image.shape)
+    print(image[1,1])
+    #blInter = createbilinInterpolator(image)
 
     # testCoords = np.array([320.4, 239.8])
     # t = timeit.Timer(stmt=lambda: blInter(testCoords))
     #
     # print(t.repeat(5, 10))
 
-    # Do the calculation of the new coordinates
-    for y in range(image.shape[1]):
-        newCoords = oldCoords + (c2 - ((image.shape[0] - 1) * c1))
-        #rectImage[0][y] = bilinInterp(image, newCoords)
-        rectImage[0][y] = blInter(newCoords)
-        np.copyto(oldCoords, newCoords)
-        for x in range(1, image.shape[0]):
-            newCoords = oldCoords + c1
-            #rectImage[x][y] = bilinInterp(image, newCoords)
-            rectImage[x][y] = blInter(newCoords)
-            np.copyto(oldCoords, newCoords)
+    #coords = (zeros + (x * c1) for x in range(image.shape[1]))
+    coords = np.array(((zeros + (x * c1) + (y * (c2 - (image.shape[1] * c1)))).flatten() for x in range(image.shape[0]) for y in range(image.shape[1])))
+    # coords1 = (zeros + (2 * c1) + (3 * (c2 - (image.shape[1] * c1)))).flatten()
+    # coords2 = (zeros + (3 * c1) + (4 * (c2 - (image.shape[1] * c1)))).flatten()
+    # print("\nCoords1 = ")
+    # print(coords1)
+    # print("\nCoords2 = ")
+    # print(coords2)
+    # comcoords = np.array([coords1, coords2])
+    #scipy.ndimage.map_coordinates(image, coords, rectImage, order=1)
 
+    # a = np.arange(921600.).reshape((480,640,3))
+    # #a = np.arange(12.).reshape((4, 3))
+    # print("a.shape =")
+    # print(a.shape)
+    # print(a[1,1])
+    #rectImage = scipy.ndimage.map_coordinates(a, comcoords, order=1)
+    rectImage = cv2.remap(src=image, map1=coords, map2=cv2._INPUT_ARRAY_NONE, interpolation=cv2.INTER_LINEAR)
+    print("rectImage = ")
+    print(rectImage)
+
+    # Do the calculation of the new coordinates
+    # for y in range(image.shape[1]):
+    #     newCoords = oldCoords + (c2 - ((image.shape[0] - 1) * c1))
+    #     #rectImage[0][y] = bilinInterp(image, newCoords)
+    #     rectImage[0][y] = blInter(newCoords)
+    #     np.copyto(oldCoords, newCoords)
+    #     for x in range(1, image.shape[0]):
+    #         newCoords = oldCoords + c1
+    #         #rectImage[x][y] = bilinInterp(image, newCoords)
+    #         rectImage[x][y] = blInter(newCoords)
+    #         np.copyto(oldCoords, newCoords)
+    #
     return rectImage.astype(np.uint8)
 
 
